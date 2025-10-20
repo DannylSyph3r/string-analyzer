@@ -1,5 +1,6 @@
 package dev.slethware.stringanalyzer.service;
 
+import dev.slethware.stringanalyzer.exception.ConflictException;
 import dev.slethware.stringanalyzer.models.dto.StringAnalysisRequest;
 import dev.slethware.stringanalyzer.models.dto.StringAnalysisResponse;
 import dev.slethware.stringanalyzer.models.dto.StringListResponse;
@@ -31,7 +32,7 @@ public class StringAnalysisServiceImpl implements StringAnalysisService {
         String value = request.getValue();
 
         if (repository.findByValue(value).isPresent()) {
-            throw new BadRequestException("String already exists in the system");
+            throw new ConflictException("String already exists in the system");
         }
 
         Strings strings = new Strings();

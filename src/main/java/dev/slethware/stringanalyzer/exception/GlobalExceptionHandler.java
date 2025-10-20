@@ -1,5 +1,7 @@
 package dev.slethware.stringanalyzer.exception;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import dev.slethware.stringanalyzer.models.ApiResponse;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -7,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -30,6 +33,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<?>> resourceNotFoundExceptionHandler(ResourceNotFoundException e) {
+        log.error(e.getMessage(), e);
+        return new ResponseEntity<>(new ApiResponse<>(e.getMessage(), e.getStatus().value(), false, null), e.getStatus());
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiResponse<?>> conflictExceptionHandler(ConflictException e) {
+        log.error(e.getMessage(), e);
+        return new ResponseEntity<>(new ApiResponse<>(e.getMessage(), e.getStatus().value(), false, null), e.getStatus());
+    }
+
+    @ExceptionHandler(UnprocessableEntityException.class)
+    public ResponseEntity<ApiResponse<?>> unprocessableEntityExceptionHandler(UnprocessableEntityException e) {
         log.error(e.getMessage(), e);
         return new ResponseEntity<>(new ApiResponse<>(e.getMessage(), e.getStatus().value(), false, null), e.getStatus());
     }
@@ -99,5 +114,37 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            @NonNull HttpHeaders headers,
+            @NonNull HttpStatusCode status,
+            @NonNull WebRequest request) {
+
+        log.error("Message not readable error: {}", ex.getMessage());
+
+        // Check if it's a type mismatch for the "value" field
+        Throwable cause = ex.getCause();
+        if (cause instanceof InvalidFormatException invalidFormatEx) {
+            for (JsonMappingException.Reference ref : invalidFormatEx.getPath()) {
+                if ("value".equals(ref.getFieldName()) && invalidFormatEx.getTargetType() == String.class) {
+                    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                            .body(new ApiResponse<>(
+                                    "Field must be a string",
+                                    HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                                    false,
+                                    null));
+                }
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(
+                        "Invalid request body",
+                        HttpStatus.BAD_REQUEST.value(),
+                        false,
+                        null));
     }
 }
