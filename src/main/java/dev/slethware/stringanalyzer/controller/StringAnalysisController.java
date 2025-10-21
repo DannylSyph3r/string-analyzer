@@ -62,6 +62,6 @@ public class StringAnalysisController {
     @Operation(summary = "Delete a string by value")
     public ResponseEntity<?> deleteString(@PathVariable String value) {
         service.deleteByValue(value);
-        return ResponseEntity.ok(ApiResponseUtil.successFull("String deleted successfully", null));
+        return ResponseEntity.noContent().build();
     }
 }

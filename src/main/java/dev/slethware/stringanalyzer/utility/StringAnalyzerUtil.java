@@ -13,11 +13,11 @@ public class StringAnalyzerUtil {
     private StringAnalyzerUtil() {}
 
     public static int calculateLength(String value) {
-        return value.replaceAll("\\s+", "").length();
+        return value.length();
     }
 
     public static boolean isPalindrome(String value) {
-        String normalized = value.toLowerCase().replaceAll("\\s+", "");
+        String normalized = value.toLowerCase();
         int left = 0;
         int right = normalized.length() - 1;
 
@@ -33,7 +33,7 @@ public class StringAnalyzerUtil {
 
     public static int countUniqueCharacters(String value) {
         Set<Character> uniqueChars = new HashSet<>();
-        for (char c : value.toLowerCase().toCharArray()) {
+        for (char c : value.toCharArray()) {
             uniqueChars.add(c);
         }
         return uniqueChars.size();
@@ -67,7 +67,7 @@ public class StringAnalyzerUtil {
 
     public static Map<String, Integer> calculateCharacterFrequency(String value) {
         Map<String, Integer> frequencyMap = new HashMap<>();
-        for (char c : value.toLowerCase().toCharArray()) {
+        for (char c : value.toCharArray()) {
             String character = String.valueOf(c);
             frequencyMap.put(character, frequencyMap.getOrDefault(character, 0) + 1);
         }

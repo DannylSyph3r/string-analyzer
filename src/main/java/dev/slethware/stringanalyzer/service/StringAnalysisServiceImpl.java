@@ -90,22 +90,19 @@ public class StringAnalysisServiceImpl implements StringAnalysisService {
 
     @Override
     public NaturalLanguageFilterResponse filterByNaturalLanguage(String query) {
-        // Parse the natural language query into filters
         Map<String, Object> parsedFilters = NaturalLanguageQueryParser.parseQuery(query);
 
-        // Extract filter values
         Boolean isPalindrome = (Boolean) parsedFilters.get("is_palindrome");
         Integer minLength = (Integer) parsedFilters.get("min_length");
         Integer maxLength = (Integer) parsedFilters.get("max_length");
         Integer wordCount = (Integer) parsedFilters.get("word_count");
         String containsCharacter = (String) parsedFilters.get("contains_character");
 
-        // Use existing filtering logic
         List<Strings> results = repository.findByFilters(isPalindrome, minLength, maxLength, wordCount);
 
         if (containsCharacter != null && !containsCharacter.isEmpty()) {
             results = results.stream()
-                    .filter(strings -> strings.getValue().toLowerCase().contains(containsCharacter.toLowerCase()))
+                    .filter(strings -> strings.getValue().contains(containsCharacter))
                     .toList();
         }
 
@@ -113,7 +110,6 @@ public class StringAnalysisServiceImpl implements StringAnalysisService {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
 
-        // Create interpreted query object
         NaturalLanguageFilterResponse.InterpretedQuery interpretedQuery =
                 new NaturalLanguageFilterResponse.InterpretedQuery(query, parsedFilters);
 
