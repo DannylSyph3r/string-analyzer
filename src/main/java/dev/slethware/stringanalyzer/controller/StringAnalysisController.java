@@ -1,5 +1,6 @@
 package dev.slethware.stringanalyzer.controller;
 
+import dev.slethware.stringanalyzer.models.dto.NaturalLanguageFilterResponse;
 import dev.slethware.stringanalyzer.models.dto.StringAnalysisRequest;
 import dev.slethware.stringanalyzer.models.dto.StringAnalysisResponse;
 import dev.slethware.stringanalyzer.models.dto.StringListResponse;
@@ -48,5 +49,19 @@ public class StringAnalysisController {
         StringListResponse response = service.getAllWithFilters(
                 is_palindrome, min_length, max_length, word_count, contains_character);
         return ResponseEntity.ok(ApiResponseUtil.successFull("Strings retrieved successfully", response));
+    }
+
+    @GetMapping("/filter-by-natural-language")
+    @Operation(summary = "Filter strings using natural language query")
+    public ResponseEntity<?> filterByNaturalLanguage(@RequestParam String query) {
+        NaturalLanguageFilterResponse response = service.filterByNaturalLanguage(query);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{value}")
+    @Operation(summary = "Delete a string by value")
+    public ResponseEntity<?> deleteString(@PathVariable String value) {
+        service.deleteByValue(value);
+        return ResponseEntity.ok(ApiResponseUtil.successFull("String deleted successfully", null));
     }
 }

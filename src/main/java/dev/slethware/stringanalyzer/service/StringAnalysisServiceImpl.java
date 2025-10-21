@@ -1,6 +1,7 @@
 package dev.slethware.stringanalyzer.service;
 
 import dev.slethware.stringanalyzer.exception.ConflictException;
+import dev.slethware.stringanalyzer.models.dto.NaturalLanguageFilterResponse;
 import dev.slethware.stringanalyzer.models.dto.StringAnalysisRequest;
 import dev.slethware.stringanalyzer.models.dto.StringAnalysisResponse;
 import dev.slethware.stringanalyzer.models.dto.StringListResponse;
@@ -8,7 +9,9 @@ import dev.slethware.stringanalyzer.models.entity.Strings;
 import dev.slethware.stringanalyzer.exception.BadRequestException;
 import dev.slethware.stringanalyzer.exception.ResourceNotFoundException;
 import dev.slethware.stringanalyzer.repository.StringsRepository;
+import dev.slethware.stringanalyzer.utility.NaturalLanguageQueryParser;
 import dev.slethware.stringanalyzer.utility.StringAnalyzerUtil;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -83,6 +86,46 @@ public class StringAnalysisServiceImpl implements StringAnalysisService {
         }
 
         return new StringListResponse(responseList, filtersApplied);
+    }
+
+    @Override
+    public NaturalLanguageFilterResponse filterByNaturalLanguage(String query) {
+        // Parse the natural language query into filters
+        Map<String, Object> parsedFilters = NaturalLanguageQueryParser.parseQuery(query);
+
+        // Extract filter values
+        Boolean isPalindrome = (Boolean) parsedFilters.get("is_palindrome");
+        Integer minLength = (Integer) parsedFilters.get("min_length");
+        Integer maxLength = (Integer) parsedFilters.get("max_length");
+        Integer wordCount = (Integer) parsedFilters.get("word_count");
+        String containsCharacter = (String) parsedFilters.get("contains_character");
+
+        // Use existing filtering logic
+        List<Strings> results = repository.findByFilters(isPalindrome, minLength, maxLength, wordCount);
+
+        if (containsCharacter != null && !containsCharacter.isEmpty()) {
+            results = results.stream()
+                    .filter(strings -> strings.getValue().toLowerCase().contains(containsCharacter.toLowerCase()))
+                    .toList();
+        }
+
+        List<StringAnalysisResponse> responseList = results.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+
+        // Create interpreted query object
+        NaturalLanguageFilterResponse.InterpretedQuery interpretedQuery =
+                new NaturalLanguageFilterResponse.InterpretedQuery(query, parsedFilters);
+
+        return new NaturalLanguageFilterResponse(responseList, responseList.size(), interpretedQuery);
+    }
+
+    @Override
+    @Transactional
+    public void deleteByValue(String value) {
+        Strings strings = repository.findByValue(value)
+                .orElseThrow(() -> new ResourceNotFoundException("String does not exist in the system"));
+        repository.delete(strings);
     }
 
     private StringAnalysisResponse mapToResponse(Strings entity) {

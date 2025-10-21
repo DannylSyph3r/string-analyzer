@@ -5,6 +5,8 @@ import org.springframework.http.HttpStatus;
 
 public class ApiResponseUtil {
 
+    private ApiResponseUtil() {}
+
     public static <T> ApiResponse<T> successFull(String message, T data) {
         return ApiResponse.<T>builder()
                 .message(message)

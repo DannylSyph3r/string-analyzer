@@ -10,6 +10,8 @@ import java.util.Set;
 
 public class StringAnalyzerUtil {
 
+    private StringAnalyzerUtil() {}
+
     public static int calculateLength(String value) {
         return value.replaceAll("\\s+", "").length();
     }
